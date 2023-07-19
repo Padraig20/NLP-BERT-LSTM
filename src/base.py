@@ -1,5 +1,3 @@
-import torch
-from transformers import AutoTokenizer, AutoModel
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report
@@ -7,39 +5,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import LabelEncoder
 import pandas as pd
-
-
-def initialize_tokenizer():
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    model = AutoModel.from_pretrained("distilbert-base-uncased").to(device)
-
-    return device, tokenizer, model
-
-
-def tokenize_df(df):
-    tokenized = tokenizer(df["text"].values.tolist(), padding=True, truncation=True, return_tensors="pt")
-
-    print(tokenized.keys())
-
-    # move on device (GPU)
-    # tokenized = {k:torch.tensor(v).to(device) for k,v in tokenized.items()}
-
-    with torch.no_grad():
-        hidden = model(**tokenized)  # dim : [batch_size(nr_sentences), tokens, emb_dim]
-
-    # get only the [CLS] hidden states
-    cls = hidden.last_hidden_state[:, 0, :]
-
-    x = cls.to("cpu")
-    y = df["label"]
-
-    print(x.shape, y.shape)
-
-    return x, y
-
+from utils.dataloader import get_bbc
 
 def print_results_test(y_test, y_pred, classifier_name):
     with open(output, 'a') as file:
@@ -178,29 +145,15 @@ def train_test_split(data, train_size):
 import sys
 
 if len(sys.argv) != 4:
-    print("Usage:\t\tpython base.py (\"opt\"|\"test\") path/to/dataset output.txt")
+    print("Usage:\t\tpython base.py (\"opt\"|\"test\") (\"bbc\"|\"\") output.txt")
     sys.exit(1)
 
 mode = sys.argv[1]
-path = sys.argv[2]
+model = sys.argv[2]
 output = sys.argv[3]
 
-# ...get dataset
-
-## BBC dataset
-## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-df = pd.read_csv(path).sample(frac=1).head(100)
-
-## preprocessing
-LE = LabelEncoder()
-df['label'] = LE.fit_transform(df['category'])
-
-df.head()
-
 if mode == "opt":
-    device, tokenizer, model = initialize_tokenizer()
-
-    df_x, df_y = tokenize_df(df)
+    df_x, df_y = get_bbc()
 
     scoring = ['accuracy', 'recall_weighted', 'f1_weighted', 'precision_weighted']
 
@@ -209,15 +162,7 @@ if mode == "opt":
     gs_random_forest_classifier(df_x, df_y, scoring)
     gs_k_nearest_neighbors_classifier(df_x, df_y, scoring)
 elif mode == "test":
-    ##dataset splitting... 80/20 rule
-    df_train, df_test = train_test_split(df, int(len(df) * .8))
-
-    # https://towardsdatascience.com/feature-extraction-with-bert-for-text-classification-533dde44dc2f
-
-    device, tokenizer, model = initialize_tokenizer()
-
-    df_train_x, df_train_y = tokenize_df(df_train)
-    df_test_x, df_test_y = tokenize_df(df_test)
+    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc(False)
 
     test_mlp_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_decision_tree_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
@@ -226,5 +171,5 @@ elif mode == "test":
     test_dummy_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
 else:
     print("Unknown Mode!")
-    print("Usage:\t\tpython base.py (\"opt\"|\"test\") path/to/dataset output.txt")
+    print("Usage:\t\tpython base.py (\"opt\"|\"test\") (\"bbc\"|\"\") output.txt")
     sys.exit(1)

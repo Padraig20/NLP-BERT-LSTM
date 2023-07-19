@@ -10,6 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
+
 def initialize_tokenizer():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -17,19 +18,20 @@ def initialize_tokenizer():
 
     return device, tokenizer, model
 
+
 def tokenize_df(df):
-    tokenized = tokenizer(df["text"].values.tolist(), padding = True, truncation = True, return_tensors="pt")
+    tokenized = tokenizer(df["text"].values.tolist(), padding=True, truncation=True, return_tensors="pt")
 
     print(tokenized.keys())
 
-    #move on device (GPU)
-    #tokenized = {k:torch.tensor(v).to(device) for k,v in tokenized.items()}
+    # move on device (GPU)
+    # tokenized = {k:torch.tensor(v).to(device) for k,v in tokenized.items()}
 
     with torch.no_grad():
-        hidden = model(**tokenized) #dim : [batch_size(nr_sentences), tokens, emb_dim]
+        hidden = model(**tokenized)  # dim : [batch_size(nr_sentences), tokens, emb_dim]
 
-    #get only the [CLS] hidden states
-    cls = hidden.last_hidden_state[:,0,:]
+    # get only the [CLS] hidden states
+    cls = hidden.last_hidden_state[:, 0, :]
 
     x = cls.to("cpu")
     y = df["label"]
@@ -37,6 +39,7 @@ def tokenize_df(df):
     print(x.shape, y.shape)
 
     return x, y
+
 
 def print_results_test(y_test, y_pred, classifier_name):
     with open(output, 'a') as file:
@@ -46,6 +49,7 @@ def print_results_test(y_test, y_pred, classifier_name):
         file.write(str(classification_report(y_test, y_pred)))
         file.write("\n\n")
         file.write("--------------" + classifier_name + "--------------\n\n\n")
+
 
 def print_results_opt(gs, classifier_name):
     results = gs.cv_results_
@@ -67,10 +71,11 @@ def print_results_opt(gs, classifier_name):
         file.write("MEAN SCORING TIME: " + str(results['mean_score_time'][i]) + "\n")
         file.write("--------------" + classifier_name + "--------------\n\n")
 
+
 def gs_random_forest_classifier(X, y, scoring):
     param_grid = {
-            "n_estimators": [10,50,100]
-            }
+        "n_estimators": [10, 50, 100]
+    }
 
     gs = GridSearchCV(estimator=RandomForestClassifier(),
                       param_grid=param_grid,
@@ -82,10 +87,11 @@ def gs_random_forest_classifier(X, y, scoring):
 
     print_results_opt(gs, "RANDOM FOREST CLASSIFIER")
 
+
 def gs_k_nearest_neighbors_classifier(X, y, scoring):
     param_grid = {
-            "n_neighbors": [1, 3, 5, 10]
-            }
+        "n_neighbors": [1, 3, 5, 10]
+    }
 
     gs = GridSearchCV(estimator=KNeighborsClassifier(),
                       param_grid=param_grid,
@@ -93,14 +99,15 @@ def gs_k_nearest_neighbors_classifier(X, y, scoring):
                       refit='accuracy',
                       cv=5,
                       verbose=5)
-    gs.fit(X,y)
+    gs.fit(X, y)
 
     print_results_opt(gs, "K NEAREST NEIGHBORS CLASSIFIER")
 
+
 def gs_mlp_classifier(X, y, scoring):
     param_grid = {
-            "hidden_layer_sizes": [(50,), (100,), (150,)]
-            }
+        "hidden_layer_sizes": [(50,), (100,), (150,)]
+    }
 
     gs = GridSearchCV(estimator=MLPClassifier(),
                       param_grid=param_grid,
@@ -108,22 +115,24 @@ def gs_mlp_classifier(X, y, scoring):
                       refit='accuracy',
                       cv=5,
                       verbose=3)
-    gs.fit(X,y)
+    gs.fit(X, y)
 
     print_results_opt(gs, "MLP CLASSIFIER")
 
+
 def gs_decision_tree_classifier(X, y, scoring):
-    param_grid = { }
-    
+    param_grid = {}
+
     gs = GridSearchCV(estimator=DecisionTreeClassifier(),
                       param_grid=param_grid,
                       scoring=scoring,
                       refit='accuracy',
                       cv=5,
                       verbose=3)
-    gs.fit(X,y)
+    gs.fit(X, y)
 
     print_results_opt(gs, "DECISION TREE CLASSIFIER")
+
 
 def test_random_forest_classifier(X_train, y_train, X_test, y_test):
     classifier = RandomForestClassifier()
@@ -131,11 +140,13 @@ def test_random_forest_classifier(X_train, y_train, X_test, y_test):
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "RANDOM FOREST CLASSIFIER")
 
+
 def test_k_nearest_neighbor_classifier(X_train, y_train, X_test, y_test):
     classifier = KNeighborsClassifier()
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "K NEAREST NEIGHBOR CLASSIFIER")
+
 
 def test_mlp_classifier(X_train, y_train, X_test, y_test):
     classifier = MLPClassifier()
@@ -143,11 +154,13 @@ def test_mlp_classifier(X_train, y_train, X_test, y_test):
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "MLP CLASSIFIER")
 
+
 def test_decision_tree_classifier(X_train, y_train, X_test, y_test):
     classifier = DecisionTreeClassifier()
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "DECISION TREE CLASSIFIER")
+
 
 def test_dummy_classifier(X_train, y_train, X_test, y_test):
     classifier = DummyClassifier(strategy='uniform')
@@ -155,10 +168,12 @@ def test_dummy_classifier(X_train, y_train, X_test, y_test):
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "DUMMY CLASSIFIER")
 
+
 def train_test_split(data, train_size):
     train = data[:train_size]
     test = data[train_size:]
     return train, test
+
 
 import sys
 
@@ -213,7 +228,3 @@ else:
     print("Unknown Mode!")
     print("Usage:\t\tpython base.py (\"opt\"|\"test\") path/to/dataset output.txt")
     sys.exit(1)
-
-
-
-

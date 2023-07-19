@@ -208,6 +208,7 @@ elif mode == "test":
     test_decision_tree_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_random_forest_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_k_nearest_neighbor_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
+    test_dummy_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
 else:
     print("Unknown Mode!")
     print("Usage:\t\tpython base.py (\"opt\"|\"test\") path/to/dataset output.txt")

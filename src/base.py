@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
-from utils.dataloader import get_bbc
+from utils.dataloader import get_bbc_tokenized_ngrams
 
 def print_results_test(y_test, y_pred, classifier_name):
     with open(output, 'a') as file:
@@ -153,7 +153,7 @@ model = sys.argv[2]
 output = sys.argv[3]
 
 if mode == "opt":
-    df_x, df_y = get_bbc()
+    df_x, df_y = get_bbc_tokenized_ngrams()
 
     scoring = ['accuracy', 'recall_weighted', 'f1_weighted', 'precision_weighted']
 
@@ -162,7 +162,7 @@ if mode == "opt":
     gs_random_forest_classifier(df_x, df_y, scoring)
     gs_k_nearest_neighbors_classifier(df_x, df_y, scoring)
 elif mode == "test":
-    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc(False)
+    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_ngrams(False)
 
     test_mlp_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_decision_tree_classifier(df_train_x, df_train_y, df_test_x, df_test_y)

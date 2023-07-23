@@ -142,18 +142,30 @@ def train_test_split(data, train_size):
     return train, test
 
 
-import sys
+import argparse
 
-if len(sys.argv) != 4:
-    print("Usage:\t\tpython base.py (\"opt\"|\"test\") (\"bbc\"|\"\") output.txt")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description='Hyperparameter optimization and testing for base algorithms.')
 
-mode = sys.argv[1]
-model = sys.argv[2]
-output = sys.argv[3]
+# Add the 3 positional arguments
+parser.add_argument('mode', type=str, help='"opt" | "test"')
+parser.add_argument('dataset', type=str, help='"bbc" | ""')
+parser.add_argument('report', type=str, help='path/to/report.txt')
+
+parser.add_argument('-a', '--augmentation', type=bool, default=False,
+                    help='Choose whether data augmentation should be performed before training.')
+
+# Parse the command-line arguments
+args = parser.parse_args()
+
+mode = args.mode
+model = args.dataset
+output = args.report
+augmentation = args.augmentation
+
+print(augmentation)
 
 if mode == "opt":
-    df_x, df_y = get_bbc_tokenized_ngrams()
+    df_x, df_y = get_bbc_tokenized_ngrams(True, 2, augmentation)
 
     scoring = ['accuracy', 'recall_weighted', 'f1_weighted', 'precision_weighted']
 
@@ -162,7 +174,7 @@ if mode == "opt":
     gs_random_forest_classifier(df_x, df_y, scoring)
     gs_k_nearest_neighbors_classifier(df_x, df_y, scoring)
 elif mode == "test":
-    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_ngrams(False)
+    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_ngrams(False, 2, augmentation)
 
     test_mlp_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_decision_tree_classifier(df_train_x, df_train_y, df_test_x, df_test_y)

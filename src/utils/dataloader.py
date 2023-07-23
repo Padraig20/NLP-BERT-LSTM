@@ -4,9 +4,13 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import nltk
 from nltk import ngrams
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
+import random
+
+nltk.download('punkt')
+nltk.download('wordnet')
 
 # https://towardsdatascience.com/feature-extraction-with-bert-for-text-classification-533dde44dc2f
 def initialize_bert_tokenizer():
@@ -16,7 +20,7 @@ def initialize_bert_tokenizer():
 
     return device, tokenizer, model
 
-def tokenize_df_bert(df, tokenizer, model, device):
+def tokenize_df_bert_hiddenstates(df, tokenizer, model, device):
     tokenized = tokenizer(df["text"].values.tolist(), padding=True, truncation=True, return_tensors="pt")
 
     print(tokenized.keys())
@@ -37,6 +41,15 @@ def tokenize_df_bert(df, tokenizer, model, device):
 
     return x, y
 
+def tokenize_df_bert(df, tokenizer, model, device):
+    tokenized = [tokenizer(text, padding='max_length', max_length = 512, truncation=True, return_tensors="pt") for text in df['text']]
+    x = tokenized
+    y = df['label'].tolist()
+
+    print(len(x), len(y))
+
+    return x, y
+
 def train_test_split(data, train_size):
     train = data[:train_size]
     test = data[train_size:]
@@ -48,11 +61,66 @@ def generate_ngrams(text, n):
 
     n_grams = list(ngrams(tokens, n))
     return n_grams
+    
+def synonym_replacement(text, n=1):
+    words = nltk.word_tokenize(text)
+    augmented_texts = []
+    for _ in range(n):
+        augmented_words = []
+        for word in words:
+            synsets = wordnet.synsets(word)
+            if synsets:
+                synonym = random.choice(synsets).lemmas()[0].name()
+                augmented_words.append(synonym)
+            else:
+                augmented_words.append(word)
+        augmented_texts.append(" ".join(augmented_words))
+    return augmented_texts
 
-def get_bbc_tokenized_bert(wholeDataset = True):
+def augment_data(data, target_class_count):
+    augmented_data = pd.DataFrame(columns=data.columns)
+
+    for category in data['category'].unique():
+        category_data = data[data['category'] == category]
+        category_count = len(category_data)
+
+        if category_count >= target_class_count:
+            augmented_data = pd.concat([augmented_data, category_data.sample(target_class_count, replace=False)], ignore_index=True)
+        else:
+            augment_count = target_class_count - category_count
+
+            augmented_texts = []
+            for i in range(augment_count):
+                augmented_texts.extend(synonym_replacement(category_data.iloc[i % category_count]['text']))
+
+            augmented_df = pd.DataFrame(augmented_texts, columns=['text'])
+            augmented_df['category'] = category
+
+            augmented_data = pd.concat([augmented_data, category_data, augmented_df], ignore_index=True)
+
+    return augmented_data
+
+def get_bbc_dataset_augmented(data):
+    # Class count to balance the dataset (you can adjust this value as needed)
+    target_class_count = data['category'].value_counts().max()
+
+    print(data['category'].value_counts())
+
+    # Augment the data to remove class imbalances
+    augmented_data = augment_data(data, target_class_count)
+
+    # Print the class distribution after augmentation (optional)
+    print(augmented_data['category'].value_counts())
+
+    return augmented_data
+
+def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
     df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+
+    if augmented:
+        df = get_bbc_dataset_augmented(df)
 
     ## preprocessing
     LE = LabelEncoder()
@@ -65,26 +133,38 @@ def get_bbc_tokenized_bert(wholeDataset = True):
     device, tokenizer, model = initialize_bert_tokenizer()
 
     if wholeDataset:
-        return tokenize_df_bert(df, tokenizer, model, device)
+        if hiddenState:
+            return tokenize_df_bert_hiddenstates(df, tokenizer, model, device)
+        else:
+            return tokenize_df_bert(df, tokenizer, model, device)
     else:
         ##dataset splitting... 80/20 rule
         df_train, df_test = train_test_split(df, int(len(df) * .8))
 
-        df_train_x, df_train_y = tokenize_df_bert(df_train, tokenizer, model, device)
-        df_test_x, df_test_y = tokenize_df_bert(df_test, tokenizer, model, device)
+        if hiddenState:
+            df_train_x, df_train_y = tokenize_df_bert_hiddenstates(df_train, tokenizer, model, device)
+            df_test_x, df_test_y = tokenize_df_bert_hiddenstates(df_test, tokenizer, model, device)
+        else:
+            df_train_x, df_train_y = tokenize_df_bert(df_train, tokenizer, model, device)
+            df_test_x, df_test_y = tokenize_df_bert(df_test, tokenizer, model, device)
 
         return df_train_x, df_train_y, df_test_x, df_test_y
 
-def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2): # standard: bigrams
+def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # standard: bigrams
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+    
+    df = pd.read_csv("../datasets/bbc-text.csv").head(100)
 
-    # Download the 'punkt' resource for tokenization
+    print(augmented)
+
+    if augmented:
+        df = get_bbc_dataset_augmented(df)
+
     nltk.download('punkt')
-
-    # Download the 'stopwords' resource for filtering stop words
     nltk.download('stopwords')
+
+    print(df)
 
     ## preprocessing
     LE = LabelEncoder()
@@ -111,6 +191,23 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2): # standard: bigrams
 
         return df_train_x, df_train_y, df_test_x, df_test_y
 
+def get_bbc_vanilla(wholeDataset = True, augmented=False):
+    ## BBC dataset
+    ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
 
+    if augmented:
+        df = get_bbc_dataset_augmented(df)
 
+    ## preprocessing
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    df.head()
+    
+    if (wholeDataset):
+        return df['text'], df['label']
+    else:
+        df_train_x, df_test_x = train_test_split(df['text'], int(len(df['text']) * .8))
+        df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
 

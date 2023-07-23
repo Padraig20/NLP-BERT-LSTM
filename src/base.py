@@ -162,8 +162,6 @@ model = args.dataset
 output = args.report
 augmentation = args.augmentation
 
-print(augmentation)
-
 if mode == "opt":
     df_x, df_y = get_bbc_tokenized_ngrams(True, 2, augmentation)
 

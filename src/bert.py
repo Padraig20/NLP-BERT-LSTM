@@ -3,9 +3,11 @@ import torch
 from torch import nn
 from transformers import BertModel
 import numpy as np
-from transformers import BertTokenizer
-
+#from transformers import BertTokenizer
 from torch.utils.data import Dataset
+from torch.optim import Adam
+from tqdm import tqdm
+
 
 #######CUSTOM DATASET FOR BERT CLASSIFIER#######
 class Dataset(Dataset):
@@ -21,6 +23,7 @@ class Dataset(Dataset):
         label = self.labels[index]
         return data_sample, label
 
+#######BERT CLASSIFIER INSTANCE#######
 class BertClassifier(nn.Module):
     def __init__(self, dropout=0.5):
         super(BertClassifier, self).__init__()
@@ -31,7 +34,6 @@ class BertClassifier(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, input_id, mask):
-
         _, pooled_output = self.bert(input_ids= input_id, attention_mask=mask,return_dict=False)
         dropout_output = self.dropout(pooled_output)
         linear_output = self.linear(dropout_output)
@@ -39,14 +41,10 @@ class BertClassifier(nn.Module):
 
         return final_layer
 
-from torch.optim import Adam
-from tqdm import tqdm
-
 def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
-
     train, val = Dataset(df_train_x, df_train_y), Dataset(df_test_x, df_test_y)
 
-    train_dataloader = torch.utils.data.DataLoader(train, batch_size=2, shuffle=True)
+    train_dataloader = torch.utils.data.DataLoader(train, batch_size=2, shuffle=True) #add randomness to training data
     val_dataloader = torch.utils.data.DataLoader(val, batch_size=2)
 
     use_cuda = torch.cuda.is_available()
@@ -56,26 +54,16 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
     optimizer = Adam(model.parameters(), lr= lr)
 
     if use_cuda:
-
             model = model.cuda()
             criterion = criterion.cuda()
-
     for epoch_num in range(epochs):
-
             total_acc_train = 0
             total_loss_train = 0
 
             for train_input, train_label in tqdm(train_dataloader):
-
                 train_label = train_label.to(device)
-                #print(train_input)
-                #print(train_label)
                 mask = train_input['attention_mask'].to(device)
                 input_id = train_input['input_ids'].squeeze(1).to(device)
-                print("mask:")
-                print(mask.shape)
-                print("input_id")
-                print(input_id.shape)
 
                 output = model(input_id, mask)
 
@@ -92,10 +80,8 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             total_acc_val = 0
             total_loss_val = 0
 
-            with torch.no_grad():
-
+            with torch.no_grad(): #evaluation does not require changes in model
                 for val_input, val_label in val_dataloader:
-
                     val_label = val_label.to(device)
                     mask = val_input['attention_mask'].to(device)
                     input_id = val_input['input_ids'].squeeze(1).to(device)
@@ -108,14 +94,13 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                     acc = (output.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
 
-            print(
-                f'Epochs: {epoch_num + 1} | Train Loss: {total_loss_train / len(df_train_x): .3f} \
+            print(f'Epochs: {epoch_num + 1} \
+                | Train Loss: {total_loss_train / len(df_train_x): .3f} \
                 | Train Accuracy: {total_acc_train / len(df_train_x): .3f} \
                 | Val Loss: {total_loss_val / len(df_test_x): .3f} \
                 | Val Accuracy: {total_acc_val / len(df_test_x): .3f}')
 
 def evaluate(model, df_test_x, df_test_y):
-
     test = Dataset(df_test_x, df_test_y)
 
     test_dataloader = torch.utils.data.DataLoader(test, batch_size=2)
@@ -124,14 +109,11 @@ def evaluate(model, df_test_x, df_test_y):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if use_cuda:
-
         model = model.cuda()
 
     total_acc_test = 0
-    with torch.no_grad():
-
+    with torch.no_grad(): #testing does not require changes in model
         for test_input, test_label in test_dataloader:
-
               test_label = test_label.to(device)
               mask = test_input['attention_mask'].to(device)
               input_id = test_input['input_ids'].squeeze(1).to(device)
@@ -144,12 +126,27 @@ def evaluate(model, df_test_x, df_test_y):
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
     
 
-EPOCHS = 5
+import argparse
+
+parser = argparse.ArgumentParser(description='Hyperparameter optimization and testing for base algorithms.')
+
+parser.add_argument('-a', '--augmentation', type=bool, default=False,
+                    help='Choose whether data augmentation should be performed before training.')
+parser.add_argument('-lr', '--learning_rate', type=float, default=1e-6,
+                    help='Choose learning rate of the DistilBERT model.')
+parser.add_argument('-e', '--epochs', type=int, default=5,
+                    help='Choose epochs of the DistilBERT model.')
+
+# Parse the command-line arguments
+args = parser.parse_args()
+
+augmentation = args.augmentation
+epochs = args.epochs
 model = BertClassifier()
-LR = 1e-6
+lr = args.learning_rate
 
-df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False)
+df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
 
-train(model, df_train_x, df_train_y, df_test_x, df_test_y, LR, EPOCHS)
+train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
 
 evaluate(model, df_test_x, df_test_y)

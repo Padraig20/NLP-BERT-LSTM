@@ -3,11 +3,33 @@ import torch
 from torch import nn
 from transformers import BertModel
 import numpy as np
-#from transformers import BertTokenizer
 from torch.utils.data import Dataset
 from torch.optim import Adam
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
+def plot_statistics(train_acc, train_loss, test_acc, test_loss):
+    epochs = list(range(1, len(train_acc) + 1))
+
+    plt.plot(epochs, train_acc, marker='o', label='train')
+    plt.plot(epochs, test_acc, marker='o', label='test')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy vs. Epochs')
+    plt.grid(True)
+    plt.xticks(epochs)
+    plt.legend()
+    plt.show()
+
+    plt.plot(epochs, train_loss, marker='o', label='train')
+    plt.plot(epochs, test_loss, marker='o', label='test')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Loss vs. Epochs')
+    plt.grid(True)
+    plt.xticks(epochs)
+    plt.legend()
+    plt.show()
 
 #######CUSTOM DATASET FOR BERT CLASSIFIER#######
 class Dataset(Dataset):
@@ -53,6 +75,11 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr= lr)
 
+    train_loss = []
+    train_acc = []
+    test_loss = []
+    test_acc = []
+
     if use_cuda:
             model = model.cuda()
             criterion = criterion.cuda()
@@ -94,11 +121,18 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                     acc = (output.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
 
+            train_acc.append(total_loss_train / len(df_train_x))
+            train_loss.append(total_loss_train / len(df_train_x))
+            test_acc.append(total_loss_val / len(df_test_x))
+            test_loss.append(total_acc_val / len(df_test_x))
+
             print(f'Epochs: {epoch_num + 1} \
                 | Train Loss: {total_loss_train / len(df_train_x): .3f} \
                 | Train Accuracy: {total_acc_train / len(df_train_x): .3f} \
                 | Val Loss: {total_loss_val / len(df_test_x): .3f} \
                 | Val Accuracy: {total_acc_val / len(df_test_x): .3f}')
+
+    plot_statistics(train_acc, train_loss, test_acc, test_loss)
 
 def evaluate(model, df_test_x, df_test_y):
     test = Dataset(df_test_x, df_test_y)

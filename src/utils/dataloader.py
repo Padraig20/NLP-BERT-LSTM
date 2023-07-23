@@ -8,9 +8,11 @@ from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
 import random
+import numpy as np
 
 nltk.download('punkt')
 nltk.download('wordnet')
+nltk.download('stopwords')
 
 # https://towardsdatascience.com/feature-extraction-with-bert-for-text-classification-533dde44dc2f
 def initialize_bert_tokenizer():
@@ -114,6 +116,17 @@ def get_bbc_dataset_augmented(data):
 
     return augmented_data
 
+def remove_stop_words(data):
+    cleaned_data = []
+    for sentences in data:       
+        tokenized = word_tokenize(sentences, 'english')
+        new_sentence =  [token for token in tokenized if token not in stopwords.words('english')]
+        sent = ''
+        for text in new_sentence:
+            sent+=text + ' '
+        cleaned_data.append(sent)
+    return np.array(cleaned_data)
+
 def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
@@ -123,6 +136,8 @@ def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented =
         df = get_bbc_dataset_augmented(df)
 
     ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
@@ -156,17 +171,12 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
     
     df = pd.read_csv("../datasets/bbc-text.csv").head(100)
 
-    print(augmented)
-
     if augmented:
         df = get_bbc_dataset_augmented(df)
 
-    nltk.download('punkt')
-    nltk.download('stopwords')
-
-    print(df)
-
     ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
@@ -200,6 +210,8 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
         df = get_bbc_dataset_augmented(df)
 
     ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
@@ -210,4 +222,3 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
     else:
         df_train_x, df_test_x = train_test_split(df['text'], int(len(df['text']) * .8))
         df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
-

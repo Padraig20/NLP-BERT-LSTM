@@ -146,7 +146,6 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Hyperparameter optimization and testing for base algorithms.')
 
-# Add the 3 positional arguments
 parser.add_argument('mode', type=str, help='"opt" | "test"')
 parser.add_argument('dataset', type=str, help='"bbc" | ""')
 parser.add_argument('report', type=str, help='path/to/report.txt')

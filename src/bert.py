@@ -121,7 +121,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                     acc = (output.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
 
-            train_acc.append(total_loss_train / len(df_train_x))
+            train_acc.append(total_acc_train / len(df_train_x))
             train_loss.append(total_loss_train / len(df_train_x))
             test_acc.append(total_loss_val / len(df_test_x))
             test_loss.append(total_acc_val / len(df_test_x))

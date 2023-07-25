@@ -162,7 +162,7 @@ def evaluate(model, df_test_x, df_test_y):
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Hyperparameter optimization and testing for base algorithms.')
+parser = argparse.ArgumentParser(description='BERT based deeplearning.')
 
 parser.add_argument('-a', '--augmentation', type=bool, default=False,
                     help='Choose whether data augmentation should be performed before training.')

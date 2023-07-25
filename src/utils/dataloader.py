@@ -32,16 +32,11 @@ def tokenize_df_bert_hiddenstates(df, tokenizer, model, device):
 
     with torch.no_grad():
         hidden = model(**tokenized)  # dim : [batch_size(nr_sentences), tokens, emb_dim]
+        embeddings = hidden.last_hidden_state #dim : [batch_size, sequence_length, hidden_size]
 
-    # get only the [CLS] hidden states
-    cls = hidden.last_hidden_state[:, 0, :]
-
-    x = cls.to("cpu")
     y = df["label"]
 
-    print(x.shape, y.shape)
-
-    return x, y
+    return embeddings, y
 
 def tokenize_df_bert(df, tokenizer, model, device):
     tokenized = [tokenizer(text, padding='max_length', max_length = 512, truncation=True, return_tensors="pt") for text in df['text']]
@@ -159,6 +154,7 @@ def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented =
         if hiddenState:
             df_train_x, df_train_y = tokenize_df_bert_hiddenstates(df_train, tokenizer, model, device)
             df_test_x, df_test_y = tokenize_df_bert_hiddenstates(df_test, tokenizer, model, device)
+
         else:
             df_train_x, df_train_y = tokenize_df_bert(df_train, tokenizer, model, device)
             df_test_x, df_test_y = tokenize_df_bert(df_test, tokenizer, model, device)
@@ -222,3 +218,5 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
     else:
         df_train_x, df_test_x = train_test_split(df['text'], int(len(df['text']) * .8))
         df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
+
+        return df_train_x, df_train_y, df_test_x, df_test_y

@@ -9,6 +9,8 @@ from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
 import random
 import numpy as np
+import torchtext
+from torchtext.data.utils import get_tokenizer
 
 nltk.download('punkt')
 nltk.download('wordnet')
@@ -193,6 +195,34 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
         return feature_matrix, df['label']
     else:
         df_train_x, df_test_x = train_test_split(feature_matrix, int(feature_matrix.shape[0] * .8))
+        df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
+
+        return df_train_x, df_train_y, df_test_x, df_test_y
+
+def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
+    ## BBC dataset
+    ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+
+    if augmented:
+        df = get_bbc_dataset_augmented(df)
+
+    ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    print(df.head())
+
+    tokenizer = get_tokenizer("basic_english")
+
+    df['tokens'] = df['text'].apply(tokenizer)
+    
+    if (wholeDataset):
+        return df['tokens'], df['label']
+    else:
+        df_train_x, df_test_x = train_test_split(df['tokens'], int(len(df['tokens']) * .8))
         df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
 
         return df_train_x, df_train_y, df_test_x, df_test_y

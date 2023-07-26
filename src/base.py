@@ -102,21 +102,21 @@ def gs_decision_tree_classifier(X, y, scoring):
 
 
 def test_random_forest_classifier(X_train, y_train, X_test, y_test):
-    classifier = RandomForestClassifier()
+    classifier = RandomForestClassifier(100)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "RANDOM FOREST CLASSIFIER")
 
 
 def test_k_nearest_neighbor_classifier(X_train, y_train, X_test, y_test):
-    classifier = KNeighborsClassifier()
+    classifier = KNeighborsClassifier(1)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "K NEAREST NEIGHBOR CLASSIFIER")
 
 
 def test_mlp_classifier(X_train, y_train, X_test, y_test):
-    classifier = MLPClassifier()
+    classifier = MLPClassifier(150)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "MLP CLASSIFIER")

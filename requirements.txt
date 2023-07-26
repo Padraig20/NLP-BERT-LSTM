@@ -265,3 +265,4 @@ ypy-websocket==0.8.2
 zeroconf==0.47.1
 zope.event==5.0
 zope.interface==6.0
+torchtext==0.15.2

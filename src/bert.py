@@ -170,6 +170,7 @@ parser.add_argument('-lr', '--learning_rate', type=float, default=1e-6,
                     help='Choose learning rate of the DistilBERT model.')
 parser.add_argument('-e', '--epochs', type=int, default=5,
                     help='Choose epochs of the DistilBERT model.')
+parser.add_argument('dataset', type=str, help='"bbc" | ""')
 
 # Parse the command-line arguments
 args = parser.parse_args()
@@ -178,9 +179,11 @@ augmentation = args.augmentation
 epochs = args.epochs
 model = BertClassifier()
 lr = args.learning_rate
+dataset = args.dataset
 
-df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
-
-train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
-
-evaluate(model, df_test_x, df_test_y)
+if dataset == "bbc":
+    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
+    train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
+    evaluate(model, df_test_x, df_test_y)
+else:
+    print("\t\tUnknown dataset, choose either bbc or .")

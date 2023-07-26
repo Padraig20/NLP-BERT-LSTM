@@ -19,7 +19,7 @@ def remove_stop_words(data):
     cleaned_data = []
     for sentences in data:       
         tokenized = word_tokenize(sentences, 'english')
-        new_sentence =  [token for token in tokenized if token not in stopwords.words('english')]
+        new_sentence =  [token for token in tokenized if token not in stopwords.words('english') and token != 'said' and token != 'will']
         sent = ''
         for text in new_sentence:
             sent+=text + ' '

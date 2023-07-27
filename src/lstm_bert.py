@@ -192,13 +192,13 @@ dataset = args.dataset
 hidden_layers = args.hidden_layers
 
 if dataset == "bbc":
-    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False)
+    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
     df_train_y = torch.tensor(df_train_y)
     df_test_y = torch.tensor(df_test_y)
 
     model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=5)  # Adjust output_dim based on your task
 
-    train(model, df_train_x, df_train_y, df_test_x, df_test_y, 0.01, 2)
+    train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
 
     evaluate(model, df_test_x, df_train_y)
 

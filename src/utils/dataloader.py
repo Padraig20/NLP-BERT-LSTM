@@ -19,8 +19,8 @@ nltk.download('stopwords')
 # https://towardsdatascience.com/feature-extraction-with-bert-for-text-classification-533dde44dc2f
 def initialize_bert_tokenizer():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    model = AutoModel.from_pretrained("distilbert-base-uncased").to(device)
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    model = AutoModel.from_pretrained("bert-base-uncased").to(device)
 
     return device, tokenizer, model
 
@@ -127,7 +127,7 @@ def remove_stop_words(data):
 def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
         df = get_bbc_dataset_augmented(df)
@@ -138,7 +138,14 @@ def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented =
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
-    df.head()
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
     
     print("Initializing Tokenizer...")
 
@@ -178,7 +185,14 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
-    df.head()
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
     
     print("Initializing Tokenizer...")
 
@@ -213,6 +227,13 @@ def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
     print(df.head())
 
     tokenizer = get_tokenizer("basic_english")
@@ -241,7 +262,14 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
     LE = LabelEncoder()
     df['label'] = LE.fit_transform(df['category'])
 
-    df.head()
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
     
     if (wholeDataset):
         return df['text'], df['label']

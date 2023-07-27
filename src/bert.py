@@ -7,6 +7,8 @@ from torch.utils.data import Dataset
 from torch.optim import Adam
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report
+import numpy as np
 
 def plot_statistics(train_acc, train_loss, test_acc, test_loss):
     epochs = list(range(1, len(train_acc) + 1))
@@ -50,7 +52,7 @@ class BertClassifier(nn.Module):
     def __init__(self, dropout=0.5):
         super(BertClassifier, self).__init__()
 
-        self.bert = BertModel.from_pretrained('distilbert-base-uncased')
+        self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.dropout = nn.Dropout(dropout)
         self.linear = nn.Linear(768, 5)
         self.relu = nn.ReLU()
@@ -107,6 +109,9 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             total_acc_val = 0
             total_loss_val = 0
 
+            predicted_labels = []
+            ground_truth_labels = []
+
             with torch.no_grad(): #evaluation does not require changes in model
                 for val_input, val_label in val_dataloader:
                     val_label = val_label.to(device)
@@ -121,6 +126,9 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                     acc = (output.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
 
+                    predicted_labels.extend(output.argmax(dim=1).cpu().numpy())
+                    ground_truth_labels.extend(val_label.cpu().numpy())
+
             train_acc.append(total_acc_train / len(df_train_x))
             train_loss.append(total_loss_train / len(df_train_x))
             test_acc.append(total_loss_val / len(df_test_x))
@@ -131,6 +139,12 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                 | Train Accuracy: {total_acc_train / len(df_train_x): .3f} \
                 | Val Loss: {total_loss_val / len(df_test_x): .3f} \
                 | Val Accuracy: {total_acc_val / len(df_test_x): .3f}')
+            
+            conf_matrix = confusion_matrix(ground_truth_labels, predicted_labels)
+            report = classification_report(ground_truth_labels, predicted_labels)
+
+            print(conf_matrix)
+            print(report)
 
     plot_statistics(train_acc, train_loss, test_acc, test_loss)
 
@@ -142,20 +156,32 @@ def evaluate(model, df_test_x, df_test_y):
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
+    predicted_labels = []
+    ground_truth_labels = []
+
     if use_cuda:
         model = model.cuda()
 
     total_acc_test = 0
     with torch.no_grad(): #testing does not require changes in model
         for test_input, test_label in test_dataloader:
-              test_label = test_label.to(device)
-              mask = test_input['attention_mask'].to(device)
-              input_id = test_input['input_ids'].squeeze(1).to(device)
+            test_label = test_label.to(device)
+            mask = test_input['attention_mask'].to(device)
+            input_id = test_input['input_ids'].squeeze(1).to(device)
 
-              output = model(input_id, mask)
+            output = model(input_id, mask)
 
-              acc = (output.argmax(dim=1) == test_label).sum().item()
-              total_acc_test += acc
+            acc = (output.argmax(dim=1) == test_label).sum().item()
+            total_acc_test += acc
+
+            predicted_labels.extend(output.argmax(dim=1).cpu().numpy())
+            ground_truth_labels.extend(test_label.cpu().numpy())
+
+    conf_matrix = confusion_matrix(ground_truth_labels, predicted_labels)
+    report = classification_report(ground_truth_labels, predicted_labels)
+		
+    print(conf_matrix)
+    print(report)
     
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
     

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from transformers import BertModel, BertTokenizer
 from utils.dataloader import get_bbc_tokenized_bert
+from utils.dataloader import get_spam_tokenized_bert
 from torch.utils.data import Dataset
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
@@ -159,10 +160,16 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
         print(conf_matrix_train)
         print(report_train)
         print()
+        print("ground truth: " + str(ground_truth_labels_train))
+        print("prediction: " + str(predicted_labels_train))
+        print()
         print("----------------------------TRAIN----------------------------\n\n")
         print("----------------------------TEST----------------------------\n")
-        print(conf_matrix_train)
-        print(report_train)
+        print(conf_matrix_val)
+        print(report_val)
+        print()
+        print("ground truth: " + str(ground_truth_labels_val))
+        print("prediction: " + str(predicted_labels_val))
         print()
         print("----------------------------TEST----------------------------\n\n")
 
@@ -211,6 +218,8 @@ def evaluate(model, df_test_x, df_test_y):
     print(conf_matrix)
     print(report)
 
+    print("ground truth: " + str(ground_truth_labels))
+    print("prediction: " + str(predicted_labels))
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
 
 
@@ -248,6 +257,16 @@ if dataset == "bbc":
 
     evaluate(model, df_test_x, df_train_y)
 
+elif dataset == "spam":
+    df_train_x, df_train_y, df_test_x, df_test_y = get_spam_tokenized_bert(False, False, augmentation)
+    df_train_y = torch.tensor(df_train_y)
+    df_test_y = torch.tensor(df_test_y)
+
+    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=5)  # Adjust output_dim based on your task
+
+    train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
+
+    evaluate(model, df_test_x, df_train_y)
 else: 
-    print("Unknown Dataset, choose either bbc or.")
+    print("Unknown Dataset, choose either bbc or spam.")
 

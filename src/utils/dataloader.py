@@ -99,7 +99,7 @@ def augment_data(data, target_class_count):
 
     return augmented_data
 
-def get_bbc_dataset_augmented(data):
+def get_dataset_augmented(data):
     # Class count to balance the dataset (you can adjust this value as needed)
     target_class_count = data['category'].value_counts().max()
 
@@ -130,7 +130,7 @@ def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented =
     df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
-        df = get_bbc_dataset_augmented(df)
+        df = get_dataset_augmented(df)
 
     ## preprocessing
     df['text'] = remove_stop_words(df['text'])
@@ -177,7 +177,7 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
     df = pd.read_csv("../datasets/bbc-text.csv").head(50)
 
     if augmented:
-        df = get_bbc_dataset_augmented(df)
+        df = get_dataset_augmented(df)
 
     ## preprocessing
     df['text'] = remove_stop_words(df['text'])
@@ -219,7 +219,7 @@ def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
     df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
-        df = get_bbc_dataset_augmented(df)
+        df = get_dataset_augmented(df)
 
     ## preprocessing
     df['text'] = remove_stop_words(df['text'])
@@ -254,7 +254,156 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
     df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
-        df = get_bbc_dataset_augmented(df)
+        df = get_dataset_augmented(df)
+
+    ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
+    
+    if (wholeDataset):
+        return df['text'], df['label']
+    else:
+        df_train_x, df_test_x = train_test_split(df['text'], int(len(df['text']) * .8))
+        df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
+
+        return df_train_x, df_train_y, df_test_x, df_test_y
+
+
+def get_spam_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv").sample(frac=1).head(50)
+
+    if augmented:
+        df = get_dataset_augmented(df)
+
+    ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
+    
+    print("Initializing Tokenizer...")
+
+    device, tokenizer, model = initialize_bert_tokenizer()
+
+    if wholeDataset:
+        if hiddenState:
+            return tokenize_df_bert_hiddenstates(df, tokenizer, model, device)
+        else:
+            return tokenize_df_bert(df, tokenizer, model, device)
+    else:
+        ##dataset splitting... 80/20 rule
+        df_train, df_test = train_test_split(df, int(len(df) * .8))
+
+        if hiddenState:
+            df_train_x, df_train_y = tokenize_df_bert_hiddenstates(df_train, tokenizer, model, device)
+            df_test_x, df_test_y = tokenize_df_bert_hiddenstates(df_test, tokenizer, model, device)
+
+        else:
+            df_train_x, df_train_y = tokenize_df_bert(df_train, tokenizer, model, device)
+            df_test_x, df_test_y = tokenize_df_bert(df_test, tokenizer, model, device)
+
+        return df_train_x, df_train_y, df_test_x, df_test_y
+
+def get_spam_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # standard: bigrams
+    
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+
+    if augmented:
+        df = get_dataset_augmented(df)
+
+    ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
+    
+    print("Initializing Tokenizer...")
+
+    n_grams_list = [generate_ngrams(text, n) for text in df['text']]
+
+    # convert to text for CountVectorizer
+    n_grams_text = [' '.join([' '.join(gram) for gram in grams]) for grams in n_grams_list]
+
+    ## initialize vectorizer
+    vectorizer = CountVectorizer()
+    feature_matrix = vectorizer.fit_transform(n_grams_text)
+
+    if (wholeDataset):
+        return feature_matrix, df['label']
+    else:
+        df_train_x, df_test_x = train_test_split(feature_matrix, int(feature_matrix.shape[0] * .8))
+        df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
+
+        return df_train_x, df_train_y, df_test_x, df_test_y
+
+def get_spam_tokenized_torch(wholeDataset = True, augmented=False):
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+
+    if augmented:
+        df = get_dataset_augmented(df)
+
+    ## preprocessing
+    df['text'] = remove_stop_words(df['text'])
+
+    LE = LabelEncoder()
+    df['label'] = LE.fit_transform(df['category'])
+
+    encoded_labels = df['label']
+    original_labels = LE.inverse_transform(encoded_labels)
+    label_encoding_map = dict(zip(original_labels, encoded_labels))
+
+    print()
+    print(label_encoding_map)
+    print()
+    print(df.head())
+    print(df['label'].nunique())
+
+    tokenizer = get_tokenizer("basic_english")
+
+    df['tokens'] = df['text'].apply(tokenizer)
+    
+    if (wholeDataset):
+        return df['tokens'], df['label']
+    else:
+        df_train_x, df_test_x = train_test_split(df['tokens'], int(len(df['tokens']) * .8))
+        df_train_y, df_test_y = train_test_split(df['label'], int(len(df['label']) * .8))
+
+        return df_train_x, df_train_y, df_test_x, df_test_y
+
+def get_spam_vanilla(wholeDataset = True, augmented=False):
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+
+    if augmented:
+        df = get_dataset_augmented(df)
 
     ## preprocessing
     df['text'] = remove_stop_words(df['text'])

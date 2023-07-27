@@ -7,6 +7,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 from utils.dataloader import get_bbc_tokenized_ngrams
+from utils.dataloader import get_spam_tokenized_ngrams
+import sys
 
 def print_results_test(y_test, y_pred, classifier_name):
     with open(output, 'a') as file:
@@ -147,7 +149,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Hyperparameter optimization and testing for base algorithms.')
 
 parser.add_argument('mode', type=str, help='"opt" | "test"')
-parser.add_argument('dataset', type=str, help='"bbc" | ""')
+parser.add_argument('dataset', type=str, help='"bbc" | "spam"')
 parser.add_argument('report', type=str, help='path/to/report.txt')
 
 parser.add_argument('-a', '--augmentation', type=bool, default=False,
@@ -157,12 +159,17 @@ parser.add_argument('-a', '--augmentation', type=bool, default=False,
 args = parser.parse_args()
 
 mode = args.mode
-model = args.dataset
+dataset = args.dataset
 output = args.report
 augmentation = args.augmentation
 
 if mode == "opt":
-    df_x, df_y = get_bbc_tokenized_ngrams(True, 2, augmentation)
+    if dataset == "bbc": 
+        df_x, df_y = get_bbc_tokenized_ngrams(True, 2, augmentation)
+    elif dataset == "spam":
+        df_x, df_y = get_spam_tokenized_ngrams(True, 2, augmentation)
+    else:
+        sys.exit(1)
 
     scoring = ['accuracy', 'recall_weighted', 'f1_weighted', 'precision_weighted']
 
@@ -171,7 +178,12 @@ if mode == "opt":
     gs_random_forest_classifier(df_x, df_y, scoring)
     gs_k_nearest_neighbors_classifier(df_x, df_y, scoring)
 elif mode == "test":
-    df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_ngrams(False, 2, augmentation)
+    if dataset == "bbc": 
+        df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_ngrams(False, 2, augmentation)
+    elif dataset == "spam":
+        df_train_x, df_train_y, df_test_x, df_test_y = get_spam_tokenized_ngrams(False, 2, augmentation)
+    else:
+        sys.exit(1)
 
     test_mlp_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
     test_decision_tree_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
@@ -180,5 +192,5 @@ elif mode == "test":
     test_dummy_classifier(df_train_x, df_train_y, df_test_x, df_test_y)
 else:
     print("Unknown Mode!")
-    print("Usage:\t\tpython base.py (\"opt\"|\"test\") (\"bbc\"|\"\") output.txt")
+    print("Usage:\t\tpython base.py (\"opt\"|\"test\") (\"bbc\"|\"spam\") output.txt")
     sys.exit(1)

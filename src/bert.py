@@ -1,4 +1,5 @@
 from utils.dataloader import get_bbc_tokenized_bert
+from utils.dataloader import get_spam_tokenized_bert
 import torch
 from torch import nn
 from transformers import BertModel
@@ -49,12 +50,12 @@ class Dataset(Dataset):
 
 #######BERT CLASSIFIER INSTANCE#######
 class BertClassifier(nn.Module):
-    def __init__(self, dropout=0.5):
+    def __init__(self, dropout=0.5, target_classes=5):
         super(BertClassifier, self).__init__()
 
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(768, 5)
+        self.linear = nn.Linear(768, target_classes)
         self.relu = nn.ReLU()
 
     def forward(self, input_id, mask):
@@ -150,10 +151,16 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             print(conf_matrix_train)
             print(report_train)
             print()
+            print("ground truth: " + str(ground_truth_labels_train))
+            print("prediction: " + str(predicted_labels_train))
+            print()
             print("----------------------------TRAIN----------------------------\n\n")
             print("----------------------------TEST----------------------------\n")
-            print(conf_matrix_train)
-            print(report_train)
+            print(conf_matrix_val)
+            print(report_val)
+            print()
+            print("ground truth: " + str(ground_truth_labels_val))
+            print("prediction: " + str(predicted_labels_val))
             print()
             print("----------------------------TEST----------------------------\n\n")
 
@@ -200,6 +207,8 @@ def evaluate(model, df_test_x, df_test_y):
     print(conf_matrix)
     print(report)
     
+    print("ground truth: " + str(ground_truth_labels))
+    print("prediction: " + str(predicted_labels))
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
     
 
@@ -210,23 +219,28 @@ parser = argparse.ArgumentParser(description='BERT based deeplearning.')
 parser.add_argument('-a', '--augmentation', type=bool, default=False,
                     help='Choose whether data augmentation should be performed before training.')
 parser.add_argument('-lr', '--learning_rate', type=float, default=1e-6,
-                    help='Choose learning rate of the DistilBERT model.')
+                    help='Choose learning rate of the BERT model.')
 parser.add_argument('-e', '--epochs', type=int, default=5,
-                    help='Choose epochs of the DistilBERT model.')
-parser.add_argument('dataset', type=str, help='"bbc" | ""')
+                    help='Choose epochs of the BERT model.')
+parser.add_argument('dataset', type=str, help='"bbc" | "spam"')
 
 # Parse the command-line arguments
 args = parser.parse_args()
 
 augmentation = args.augmentation
 epochs = args.epochs
-model = BertClassifier()
 lr = args.learning_rate
 dataset = args.dataset
 
 if dataset == "bbc":
+    model = BertClassifier(target_classes=5)
     df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
     evaluate(model, df_test_x, df_test_y)
+elif dataset == "spam":
+    model = BertClassifier(target_classes=2)
+    df_train_x, df_train_y, df_test_x, df_test_y = get_spam_tokenized_bert(False, False, augmentation)
+    train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
+    evaluate(model, df_test_x, df_test_y)
 else:
-    print("\t\tUnknown dataset, choose either bbc or .")
+    print("\t\tUnknown dataset, choose either bbc or spam.")

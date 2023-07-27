@@ -26,8 +26,7 @@ def remove_stop_words(data):
     return np.array(cleaned_data)
 
 
-def plot_bbc_dataset_characteristics(stripped = False):
-    dataset_path = '../datasets/bbc-text.csv'
+def plot_dataset_characteristics(dataset_path, stripped = False):
     data = pd.read_csv(dataset_path)
     
     if stripped:
@@ -85,15 +84,19 @@ def plot_bbc_dataset_characteristics(stripped = False):
 import sys
 
 if len(sys.argv) != 2:
-    print("Usage:\t\tpython datadescriptor.py (\"bbc\"|\"bbc_stripped\")")
+    print("Usage:\t\tpython datadescriptor.py (\"bbc\"|\"bbc_stripped\"|\"spam\"|\"spam_stripped\")")
     sys.exit(1)
 
 mode = sys.argv[1]
 
 if mode == "bbc":
-    plot_bbc_dataset_characteristics()
+    plot_dataset_characteristics("../datasets/bbc-text.csv")
 elif mode == "bbc_stripped":
-    plot_bbc_dataset_characteristics(True)
+    plot_dataset_characteristics("../datasets/bbc-text.csv", True)
+elif mode == "spam":
+    plot_dataset_characteristics("../datasets/SMSSpamCollection.csv")
+elif mode == "spam_stripped":
+    plot_dataset_characteristics("../datasets/SMSSpamCollection.csv", True)
 else:
     print("Unknown mode!")
     print("Usage:\t\tpython datadescriptor.py (\"bbc\"|\"bbc_stripped\"|\"\")")

@@ -174,7 +174,7 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
     
-    df = pd.read_csv("../datasets/bbc-text.csv").head(100)
+    df = pd.read_csv("../datasets/bbc-text.csv").head(50)
 
     if augmented:
         df = get_bbc_dataset_augmented(df)
@@ -216,7 +216,7 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
 def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
         df = get_bbc_dataset_augmented(df)
@@ -251,7 +251,7 @@ def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
 def get_bbc_vanilla(wholeDataset = True, augmented=False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(100)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
 
     if augmented:
         df = get_bbc_dataset_augmented(df)

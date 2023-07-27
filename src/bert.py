@@ -89,6 +89,9 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             total_acc_train = 0
             total_loss_train = 0
 
+            predicted_labels_train = []
+            ground_truth_labels_train = []
+        
             for train_input, train_label in tqdm(train_dataloader):
                 train_label = train_label.to(device)
                 mask = train_input['attention_mask'].to(device)
@@ -101,6 +104,9 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
 
                 acc = (output.argmax(dim=1) == train_label).sum().item()
                 total_acc_train += acc
+                
+                predicted_labels_train.extend(output.argmax(dim=1).cpu().numpy())
+                ground_truth_labels_train.extend(train_label.cpu().numpy())
 
                 model.zero_grad()
                 batch_loss.backward()
@@ -109,8 +115,8 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             total_acc_val = 0
             total_loss_val = 0
 
-            predicted_labels = []
-            ground_truth_labels = []
+            predicted_labels_val = []
+            ground_truth_labels_val = []
 
             with torch.no_grad(): #evaluation does not require changes in model
                 for val_input, val_label in val_dataloader:
@@ -126,25 +132,36 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                     acc = (output.argmax(dim=1) == val_label).sum().item()
                     total_acc_val += acc
 
-                    predicted_labels.extend(output.argmax(dim=1).cpu().numpy())
-                    ground_truth_labels.extend(val_label.cpu().numpy())
+                    predicted_labels_val.extend(output.argmax(dim=1).cpu().numpy())
+                    ground_truth_labels_val.extend(val_label.cpu().numpy())
 
             train_acc.append(total_acc_train / len(df_train_x))
             train_loss.append(total_loss_train / len(df_train_x))
             test_acc.append(total_loss_val / len(df_test_x))
             test_loss.append(total_acc_val / len(df_test_x))
 
+            conf_matrix_train = confusion_matrix(ground_truth_labels_train, predicted_labels_train)
+            report_train = classification_report(ground_truth_labels_train, predicted_labels_train)
+
+            conf_matrix_val = confusion_matrix(ground_truth_labels_val, predicted_labels_val)
+            report_val = classification_report(ground_truth_labels_val, predicted_labels_val)
+
+            print("\n\n----------------------------TRAIN----------------------------\n")
+            print(conf_matrix_train)
+            print(report_train)
+            print()
+            print("----------------------------TRAIN----------------------------\n\n")
+            print("----------------------------TEST----------------------------\n")
+            print(conf_matrix_train)
+            print(report_train)
+            print()
+            print("----------------------------TEST----------------------------\n\n")
+
             print(f'Epochs: {epoch_num + 1} \
                 | Train Loss: {total_loss_train / len(df_train_x): .3f} \
                 | Train Accuracy: {total_acc_train / len(df_train_x): .3f} \
                 | Val Loss: {total_loss_val / len(df_test_x): .3f} \
                 | Val Accuracy: {total_acc_val / len(df_test_x): .3f}')
-            
-            conf_matrix = confusion_matrix(ground_truth_labels, predicted_labels)
-            report = classification_report(ground_truth_labels, predicted_labels)
-
-            print(conf_matrix)
-            print(report)
 
     plot_statistics(train_acc, train_loss, test_acc, test_loss)
 

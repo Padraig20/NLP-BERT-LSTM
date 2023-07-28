@@ -78,8 +78,8 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
 
     train, val = Dataset(df_train_x, df_train_y), Dataset(df_test_x, df_test_y)
 
-    train_dataloader = torch.utils.data.DataLoader(train, batch_size=2, shuffle=True) #add randomness to training data
-    val_dataloader = torch.utils.data.DataLoader(val, batch_size=2)
+    train_dataloader = torch.utils.data.DataLoader(train, batch_size=32, shuffle=True) #add randomness to training data
+    val_dataloader = torch.utils.data.DataLoader(val, batch_size=32)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -139,7 +139,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
                 batch_loss = criterion(output, val_label)
                 total_loss_val += batch_loss.item()
 
-                acc = (output.argmax(dim=1) == train_label).sum().item()
+                acc = (output.argmax(dim=1) == val_label).sum().item()
                 total_acc_val += acc
                 
                 predicted_labels_val.extend(output.argmax(dim=1).cpu().numpy())
@@ -161,7 +161,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
         print(report_train)
         print()
         print("ground truth: " + str(ground_truth_labels_train))
-        print("prediction: " + str(predicted_labels_train))
+        print("prediction:   " + str(predicted_labels_train))
         print()
         print("----------------------------TRAIN----------------------------\n\n")
         print("----------------------------TEST----------------------------\n")
@@ -169,7 +169,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
         print(report_val)
         print()
         print("ground truth: " + str(ground_truth_labels_val))
-        print("prediction: " + str(predicted_labels_val))
+        print("prediction:   " + str(predicted_labels_val))
         print()
         print("----------------------------TEST----------------------------\n\n")
 
@@ -219,7 +219,7 @@ def evaluate(model, df_test_x, df_test_y):
     print(report)
 
     print("ground truth: " + str(ground_truth_labels))
-    print("prediction: " + str(predicted_labels))
+    print("prediction:   " + str(predicted_labels))
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
 
 
@@ -262,7 +262,7 @@ elif dataset == "spam":
     df_train_y = torch.tensor(df_train_y)
     df_test_y = torch.tensor(df_test_y)
 
-    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=5)  # Adjust output_dim based on your task
+    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=2)  # Adjust output_dim based on your task
 
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
 

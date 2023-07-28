@@ -133,8 +133,10 @@ embedding_dim = args.embedding_dim
 
 if dataset == "bbc":
     df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_torch(False, augmentation)
+    output_size = 5 # the number of output classes
 elif dataset == "spam":
     df_train_x, df_train_y, df_test_x, df_test_y = get_spam_tokenized_torch(False, augmentation)
+    output_size = 2 # the number of output classes
 else:
     print("\t\tUnknown dataset, choose either bbc or spam.")
     sys.exit(1)
@@ -143,12 +145,11 @@ train = Dataset(df_train_x.values, df_train_y.values, max_seq_length=max_seq_len
 test = Dataset(df_test_x.values, df_test_y.values, max_seq_length=max_seq_length)
 
 input_size = len(train.vocab)
-output_size = 5 # the number of output classes
 
 model = LSTMModel(input_size, embedding_dim, hidden_dim, output_size, num_layers)
 
-train_dataloader = DataLoader(train, batch_size=2) #add randomness to training data
-val_dataloader = DataLoader(test, batch_size=2)
+train_dataloader = DataLoader(train, batch_size=32, shuffle=True) #add randomness to training data
+val_dataloader = DataLoader(test, batch_size=32)
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -208,8 +209,8 @@ for epoch_num in range(epochs):
 
     train_acc.append(total_acc_train / len(df_train_x))
     train_loss.append(total_loss_train / len(df_train_x))
-    test_acc.append(total_loss_val / len(df_test_x))
-    test_loss.append(total_acc_val / len(df_test_x))
+    test_acc.append(total_acc_val / len(df_test_x))
+    test_loss.append(total_loss_val / len(df_test_x))
 
     conf_matrix_train = confusion_matrix(ground_truth_labels_train, predicted_labels_train)
     report_train = classification_report(ground_truth_labels_train, predicted_labels_train)
@@ -222,7 +223,7 @@ for epoch_num in range(epochs):
     print(report_train)
     print()
     print("ground truth: " + str(ground_truth_labels_train))
-    print("prediction: " + str(predicted_labels_train))
+    print("prediction:   " + str(predicted_labels_train))
     print()
     print("----------------------------TRAIN----------------------------\n\n")
     print("----------------------------TEST----------------------------\n")
@@ -230,7 +231,7 @@ for epoch_num in range(epochs):
     print(report_val)
     print()
     print("ground truth: " + str(ground_truth_labels_val))
-    print("prediction: " + str(predicted_labels_val))
+    print("prediction:   " + str(predicted_labels_val))
     print()
     print("----------------------------TEST----------------------------\n\n")
 
@@ -264,5 +265,5 @@ print(conf_matrix)
 print(report)
 
 print("ground truth: " + str(ground_truth_labels))
-print("prediction: " + str(predicted_labels))
+print("prediction:   " + str(predicted_labels))
 print(f'Test Accuracy: {(total_acc_test / len(df_test_x)): .3f}')

@@ -118,7 +118,7 @@ def test_k_nearest_neighbor_classifier(X_train, y_train, X_test, y_test):
 
 
 def test_mlp_classifier(X_train, y_train, X_test, y_test):
-    classifier = MLPClassifier(150)
+    classifier = MLPClassifier(50)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print_results_test(y_test, y_pred, "MLP CLASSIFIER")

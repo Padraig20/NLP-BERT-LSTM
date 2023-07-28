@@ -50,12 +50,12 @@ class Dataset(Dataset):
 
 #######BERT CLASSIFIER INSTANCE#######
 class BertClassifier(nn.Module):
-    def __init__(self, dropout=0.5, target_classes=5):
+    def __init__(self, dropout=0.1, target_classes=5, hidden_layers=768):
         super(BertClassifier, self).__init__()
 
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(768, target_classes)
+        self.linear = nn.Linear(hidden_layers, target_classes)
         self.relu = nn.ReLU()
 
     def forward(self, input_id, mask):
@@ -69,8 +69,8 @@ class BertClassifier(nn.Module):
 def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
     train, val = Dataset(df_train_x, df_train_y), Dataset(df_test_x, df_test_y)
 
-    train_dataloader = torch.utils.data.DataLoader(train, batch_size=2, shuffle=True) #add randomness to training data
-    val_dataloader = torch.utils.data.DataLoader(val, batch_size=2)
+    train_dataloader = torch.utils.data.DataLoader(train, batch_size=32, shuffle=True) #add randomness to training data
+    val_dataloader = torch.utils.data.DataLoader(val, batch_size=32)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -138,8 +138,8 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
 
             train_acc.append(total_acc_train / len(df_train_x))
             train_loss.append(total_loss_train / len(df_train_x))
-            test_acc.append(total_loss_val / len(df_test_x))
-            test_loss.append(total_acc_val / len(df_test_x))
+            test_acc.append(total_acc_val / len(df_test_x))
+            test_loss.append(total_loss_val / len(df_test_x))
 
             conf_matrix_train = confusion_matrix(ground_truth_labels_train, predicted_labels_train)
             report_train = classification_report(ground_truth_labels_train, predicted_labels_train)
@@ -152,7 +152,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             print(report_train)
             print()
             print("ground truth: " + str(ground_truth_labels_train))
-            print("prediction: " + str(predicted_labels_train))
+            print("prediction:   " + str(predicted_labels_train))
             print()
             print("----------------------------TRAIN----------------------------\n\n")
             print("----------------------------TEST----------------------------\n")
@@ -160,7 +160,7 @@ def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
             print(report_val)
             print()
             print("ground truth: " + str(ground_truth_labels_val))
-            print("prediction: " + str(predicted_labels_val))
+            print("prediction:   " + str(predicted_labels_val))
             print()
             print("----------------------------TEST----------------------------\n\n")
 
@@ -208,7 +208,7 @@ def evaluate(model, df_test_x, df_test_y):
     print(report)
     
     print("ground truth: " + str(ground_truth_labels))
-    print("prediction: " + str(predicted_labels))
+    print("prediction:   " + str(predicted_labels))
     print(f'Test Accuracy: {total_acc_test / len(df_test_x): .3f}')
     
 
@@ -218,10 +218,14 @@ parser = argparse.ArgumentParser(description='BERT based deeplearning.')
 
 parser.add_argument('-a', '--augmentation', type=bool, default=False,
                     help='Choose whether data augmentation should be performed before training.')
-parser.add_argument('-lr', '--learning_rate', type=float, default=1e-6,
+parser.add_argument('-lr', '--learning_rate', type=float, default=2e-5,
                     help='Choose learning rate of the BERT model.')
 parser.add_argument('-e', '--epochs', type=int, default=5,
                     help='Choose epochs of the BERT model.')
+parser.add_argument('-s', '--hidden_layers', type=int, default=768,
+                    help='Choose hidden layers of the BERT model.')
+parser.add_argument('-d', '--dropout', type=float, default=0.1,
+                    help='Choose dropout rate of the BERT model.') 
 parser.add_argument('dataset', type=str, help='"bbc" | "spam"')
 
 # Parse the command-line arguments
@@ -231,14 +235,16 @@ augmentation = args.augmentation
 epochs = args.epochs
 lr = args.learning_rate
 dataset = args.dataset
+dropout = args.dropout
+hidden_layers = args.hidden_layers
 
 if dataset == "bbc":
-    model = BertClassifier(target_classes=5)
+    model = BertClassifier(target_classes=5, dropout=dropout, hidden_layers=hidden_layers)
     df_train_x, df_train_y, df_test_x, df_test_y = get_bbc_tokenized_bert(False, False, augmentation)
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
     evaluate(model, df_test_x, df_test_y)
 elif dataset == "spam":
-    model = BertClassifier(target_classes=2)
+    model = BertClassifier(target_classes=2, dropout=dropout, hidden_layers=hidden_layers)
     df_train_x, df_train_y, df_test_x, df_test_y = get_spam_tokenized_bert(False, False, augmentation)
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
     evaluate(model, df_test_x, df_test_y)

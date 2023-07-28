@@ -96,8 +96,9 @@ def augment_data(data, target_class_count):
             augmented_df['category'] = category
 
             augmented_data = pd.concat([augmented_data, category_data, augmented_df], ignore_index=True)
+    #random.shuffle(augmented_data)
 
-    return augmented_data
+    return augmented_data.sample(frac=1, random_state=42).reset_index(drop=True) #shuffle dataset
 
 def get_dataset_augmented(data):
     # Class count to balance the dataset (you can adjust this value as needed)
@@ -127,7 +128,7 @@ def remove_stop_words(data):
 def get_bbc_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1)
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -174,7 +175,7 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
     
-    df = pd.read_csv("../datasets/bbc-text.csv").head(50)
+    df = pd.read_csv("../datasets/bbc-text.csv")
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -216,7 +217,7 @@ def get_bbc_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # s
 def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1)
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -251,7 +252,7 @@ def get_bbc_tokenized_torch(wholeDataset = True, augmented=False):
 def get_bbc_vanilla(wholeDataset = True, augmented=False):
     ## BBC dataset
     ## https://storage.googleapis.com/dataset-uploader/bbc/bbc-text.csv
-    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1).head(50)
+    df = pd.read_csv("../datasets/bbc-text.csv").sample(frac=1)
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -281,7 +282,7 @@ def get_bbc_vanilla(wholeDataset = True, augmented=False):
 
 
 def get_spam_tokenized_bert(wholeDataset = True, hiddenState = False, augmented = False):
-    df = pd.read_csv("../datasets/SMSSpamCollection.csv").sample(frac=1).head(50)
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv").sample(frac=1)
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -326,7 +327,7 @@ def get_spam_tokenized_bert(wholeDataset = True, hiddenState = False, augmented 
 
 def get_spam_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # standard: bigrams
     
-    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv")
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -366,7 +367,7 @@ def get_spam_tokenized_ngrams(wholeDataset = True, n = 2, augmented = False): # 
         return df_train_x, df_train_y, df_test_x, df_test_y
 
 def get_spam_tokenized_torch(wholeDataset = True, augmented=False):
-    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv")
 
     if augmented:
         df = get_dataset_augmented(df)
@@ -400,7 +401,7 @@ def get_spam_tokenized_torch(wholeDataset = True, augmented=False):
         return df_train_x, df_train_y, df_test_x, df_test_y
 
 def get_spam_vanilla(wholeDataset = True, augmented=False):
-    df = pd.read_csv("../datasets/SMSSpamCollection.csv").head(50)
+    df = pd.read_csv("../datasets/SMSSpamCollection.csv")
 
     if augmented:
         df = get_dataset_augmented(df)

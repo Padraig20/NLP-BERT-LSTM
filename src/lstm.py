@@ -148,8 +148,8 @@ input_size = len(train.vocab)
 
 model = LSTMModel(input_size, embedding_dim, hidden_dim, output_size, num_layers)
 
-train_dataloader = DataLoader(train, batch_size=32, shuffle=True) #add randomness to training data
-val_dataloader = DataLoader(test, batch_size=32)
+train_dataloader = DataLoader(train, batch_size=64, shuffle=True) #add randomness to training data
+val_dataloader = DataLoader(test, batch_size=64)
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")

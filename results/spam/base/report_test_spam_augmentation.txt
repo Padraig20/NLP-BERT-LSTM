@@ -1,0 +1,100 @@
+--------------MLP CLASSIFIER--------------
+
+
+[[971   2]
+ [  8 949]]
+
+
+              precision    recall  f1-score   support
+
+           0       0.99      1.00      0.99       973
+           1       1.00      0.99      0.99       957
+
+    accuracy                           0.99      1930
+   macro avg       0.99      0.99      0.99      1930
+weighted avg       0.99      0.99      0.99      1930
+
+
+--------------MLP CLASSIFIER--------------
+
+
+--------------DECISION TREE CLASSIFIER--------------
+
+
+[[940  33]
+ [ 34 923]]
+
+
+              precision    recall  f1-score   support
+
+           0       0.97      0.97      0.97       973
+           1       0.97      0.96      0.96       957
+
+    accuracy                           0.97      1930
+   macro avg       0.97      0.97      0.97      1930
+weighted avg       0.97      0.97      0.97      1930
+
+
+--------------DECISION TREE CLASSIFIER--------------
+
+
+--------------RANDOM FOREST CLASSIFIER--------------
+
+
+[[971   2]
+ [ 11 946]]
+
+
+              precision    recall  f1-score   support
+
+           0       0.99      1.00      0.99       973
+           1       1.00      0.99      0.99       957
+
+    accuracy                           0.99      1930
+   macro avg       0.99      0.99      0.99      1930
+weighted avg       0.99      0.99      0.99      1930
+
+
+--------------RANDOM FOREST CLASSIFIER--------------
+
+
+--------------K NEAREST NEIGHBOR CLASSIFIER--------------
+
+
+[[972   1]
+ [ 21 936]]
+
+
+              precision    recall  f1-score   support
+
+           0       0.98      1.00      0.99       973
+           1       1.00      0.98      0.99       957
+
+    accuracy                           0.99      1930
+   macro avg       0.99      0.99      0.99      1930
+weighted avg       0.99      0.99      0.99      1930
+
+
+--------------K NEAREST NEIGHBOR CLASSIFIER--------------
+
+
+--------------DUMMY CLASSIFIER--------------
+
+
+[[457 516]
+ [432 525]]
+
+
+              precision    recall  f1-score   support
+
+           0       0.51      0.47      0.49       973
+           1       0.50      0.55      0.53       957
+
+    accuracy                           0.51      1930
+   macro avg       0.51      0.51      0.51      1930
+weighted avg       0.51      0.51      0.51      1930
+
+
+--------------DUMMY CLASSIFIER--------------
+
+

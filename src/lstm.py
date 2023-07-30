@@ -173,6 +173,9 @@ for epoch_num in range(epochs):
     ground_truth_labels_train = []
 
     for train_input, train_label in tqdm(train_dataloader):
+        train_input = train_input.to(device)
+        train_label = train_label.to(device)
+
         output = model(train_input)
 
         batch_loss = criterion(output, train_label.long())

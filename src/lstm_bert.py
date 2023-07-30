@@ -233,7 +233,7 @@ parser.add_argument('-e', '--epochs', type=int, default=5,
                     help='Choose epochs of the LSTM model.')
 parser.add_argument('-l', '--hidden_layers', type=int, default=5,
                     help='Choose hidden layers of the LSTM model.')
-parser.add_argument('dataset', type=str, help='"bbc" | ""')
+parser.add_argument('dataset', type=str, help='"bbc" | "spam"')
 
 args = parser.parse_args()
 

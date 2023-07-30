@@ -70,8 +70,8 @@ class LSTMWithBertEmbeddings(nn.Module):
         # LSTM layer
         lstm_output, _ = self.lstm(bert_output)
 
-        # Final output for classification
-        output = self.fc(lstm_output[:, -1, :])  # Use the last output from the LSTM
+        # final output for classification
+        output = self.fc(lstm_output[:, -1, :])  # use last output from the LSTM
         return output
 
 def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
@@ -207,9 +207,7 @@ def evaluate(model, df_test_x, df_test_y):
             acc = (output.argmax(dim=1) == test_label).sum().item()
             total_acc_test += acc
               
-            # Convert the predicted outputs to numpy array and store in 'predicted_labels'
             predicted_labels.extend(output.argmax(dim=1).cpu().numpy())
-			# Convert the ground truth labels to numpy array and store in 'ground_truth_labels'
             ground_truth_labels.extend(test_label.cpu().numpy())
 			  
     conf_matrix = confusion_matrix(ground_truth_labels, predicted_labels)
@@ -237,7 +235,6 @@ parser.add_argument('-l', '--hidden_layers', type=int, default=5,
                     help='Choose hidden layers of the LSTM model.')
 parser.add_argument('dataset', type=str, help='"bbc" | ""')
 
-# Parse the command-line arguments
 args = parser.parse_args()
 
 augmentation = args.augmentation
@@ -251,7 +248,7 @@ if dataset == "bbc":
     df_train_y = torch.tensor(df_train_y)
     df_test_y = torch.tensor(df_test_y)
 
-    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=5)  # Adjust output_dim based on your task
+    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=5)
 
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
 
@@ -262,7 +259,7 @@ elif dataset == "spam":
     df_train_y = torch.tensor(df_train_y)
     df_test_y = torch.tensor(df_test_y)
 
-    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=2)  # Adjust output_dim based on your task
+    model = LSTMWithBertEmbeddings(hidden_dim=hidden_layers, output_dim=2)
 
     train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs)
 

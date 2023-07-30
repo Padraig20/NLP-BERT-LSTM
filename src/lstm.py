@@ -70,10 +70,10 @@ class Dataset(Dataset):
         text = self.texts[idx]
         label = self.labels[idx]
 
-        # Convert words to indices using the vocabulary
+        # convert words to indices via vocabulary
         text_indices = [self.word_to_idx[word] if word in self.word_to_idx else self.word_to_idx["<unk>"] for word in text]
 
-        # Pad sequences to the same length if max_seq_length is specified
+        # pad sequences to the same length
         if self.max_seq_length is not None:
             if len(text_indices) < self.max_seq_length:
                 text_indices = text_indices + [self.word_to_idx["<pad>"]] * (self.max_seq_length - len(text_indices))

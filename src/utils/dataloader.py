@@ -24,13 +24,10 @@ def initialize_bert_tokenizer():
 
     return device, tokenizer, model
 
-def tokenize_df_bert_hiddenstates(df, tokenizer, model, device):
+def tokenize_df_bert_hiddenstates(df, tokenizer, model, device): #BERT Embeddings
     tokenized = tokenizer(df["text"].values.tolist(), padding=True, truncation=True, return_tensors="pt")
 
     print(tokenized.keys())
-
-    # move on device (GPU)
-    # tokenized = {k:torch.tensor(v).to(device) for k,v in tokenized.items()}
 
     with torch.no_grad():
         hidden = model(**tokenized)  # dim : [batch_size(nr_sentences), tokens, emb_dim]
@@ -101,15 +98,12 @@ def augment_data(data, target_class_count):
     return augmented_data.sample(frac=1, random_state=42).reset_index(drop=True) #shuffle dataset
 
 def get_dataset_augmented(data):
-    # Class count to balance the dataset (you can adjust this value as needed)
     target_class_count = data['category'].value_counts().max()
 
     print(data['category'].value_counts())
 
-    # Augment the data to remove class imbalances
     augmented_data = augment_data(data, target_class_count)
 
-    # Print the class distribution after augmentation (optional)
     print(augmented_data['category'].value_counts())
 
     return augmented_data

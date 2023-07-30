@@ -228,7 +228,6 @@ parser.add_argument('-d', '--dropout', type=float, default=0.1,
                     help='Choose dropout rate of the BERT model.') 
 parser.add_argument('dataset', type=str, help='"bbc" | "spam"')
 
-# Parse the command-line arguments
 args = parser.parse_args()
 
 augmentation = args.augmentation

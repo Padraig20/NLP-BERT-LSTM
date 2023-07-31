@@ -69,8 +69,8 @@ class BertClassifier(nn.Module):
 def train(model, df_train_x, df_train_y, df_test_x, df_test_y, lr, epochs):
     train, val = Dataset(df_train_x, df_train_y), Dataset(df_test_x, df_test_y)
 
-    train_dataloader = torch.utils.data.DataLoader(train, batch_size=64, shuffle=True) #add randomness to training data
-    val_dataloader = torch.utils.data.DataLoader(val, batch_size=64)
+    train_dataloader = torch.utils.data.DataLoader(train, batch_size=32, shuffle=True) #add randomness to training data
+    val_dataloader = torch.utils.data.DataLoader(val, batch_size=32)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
